@@ -1,4 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Prata&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Island+Moments&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Island+Moments&display=swap');
+
+.font-vibes {
+  font-family: 'Great Vibes', cursive;
+}
+.font-island {
+  font-family: 'Island Moments', cursive;
+}
+.logo {
+  font-family: 'Great vibes'
+}
+.logo {
+  font-family: 'Great Vibes', cursive; /* or any font you're using */
+  font-size: 2rem;
+  font-weight: medium;
+  line-height: 1; /* or 1.1, 1.2 based on visual preference */
+  color: #1f2937; /* text-gray-800 */
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+  color: #000; /* optional hover effect */
+}
+
 
 
 @tailwind base;
@@ -10,7 +36,7 @@ a.active hr{
 }
 
 *{
-    font-family: Outfit;
+    font-family: inter;
     
 }
 .prata-regular {

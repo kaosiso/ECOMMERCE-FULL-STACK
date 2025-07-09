@@ -17,9 +17,11 @@ const loginUser = async (req, res) => {
       return res.json({ success: false, message: "User doesn't exists" });
     }
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (isMatch) {
       const token = createToken(user._id);
-      res.json({ success: true, token });
+      const { password, ...userData } = user._doc; // remove password before sending
+      res.json({ success: true, token, user: userData });
     } else {
       res.json({ success: false, message: "Invalid credentials" });
     }
@@ -65,7 +67,8 @@ const registerUser = async (req, res) => {
     const user = await newUser.save();
 
     const token = createToken(user._id);
-    res.json({ success: true, token });
+    const { password: _, ...userData } = user._doc;
+    res.json({ success: true, token, user: userData });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -73,18 +76,20 @@ const registerUser = async (req, res) => {
 };
 //Route for Admin login
 const adminLogin = async (req, res) => {
-
   try {
-    const {email,password} = req.body
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-      const token = jwt.sign(email+password,process.env.JWT_SECRET);
-      res.json({success:true, token})
+    const { email, password } = req.body;
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(email + password, process.env.JWT_SECRET);
+      res.json({ success: true, token });
     } else {
-      res.json({success:false, message:"Invalid credentials"})
+      res.json({ success: false, message: "Invalid credentials" });
     }
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: error.message})
+    res.json({ success: false, message: error.message });
   }
 };
 
