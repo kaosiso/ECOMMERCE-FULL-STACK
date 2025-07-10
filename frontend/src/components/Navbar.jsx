@@ -86,10 +86,13 @@ const Navbar = () => {
             alt="Profile"
           />
           {token && (
-            <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4 animate-fadeSlideDown">
+            <div className="group-hover:block hidden absolute dropdown-menu right-0 pt-4 animate-fadeSlideDown z-50">
               <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded shadow-sm">
                 <p className="cursor-pointer hover:text-black">My Profile</p>
-                <p onClick={() => navigate("/orders")} className="cursor-pointer hover:text-black">
+                <p
+                  onClick={() => navigate("/orders")}
+                  className="cursor-pointer hover:text-black"
+                >
                   Orders
                 </p>
                 <p onClick={logout} className="cursor-pointer hover:text-black">
@@ -128,7 +131,11 @@ const Navbar = () => {
             onClick={() => setVisible(false)}
             className="flex items-center gap-4 mb-6 cursor-pointer"
           >
-            <img className="h-4 rotate-180" src={assets.dropdown_icon} alt="Back" />
+            <img
+              className="h-4 rotate-180"
+              src={assets.dropdown_icon}
+              alt="Back"
+            />
             <p>Back</p>
           </div>
           {navLinks.map(({ path, label }) => (

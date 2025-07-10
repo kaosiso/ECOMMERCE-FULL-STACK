@@ -4,12 +4,17 @@ import Title from "../components/Title";
 import Product from "./Product";
 import { assets } from "../assets/assets";
 import CartTotal from "../components/CartTotal";
+import { toast } from "react-toastify"; // ✅ import toast
 
 const Cart = () => {
   const { products, currency, cartItems, updateQuantity, navigate } =
     useContext(ShopContext);
 
   const [cartData, setCartData] = useState([]);
+
+  useEffect(() => {
+    toast.info("Payment is made in Naira if you use Paystack, thank you");
+  }, []);
 
   useEffect(() => {
     if (products.length > 0) {

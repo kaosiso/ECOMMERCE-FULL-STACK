@@ -3,23 +3,21 @@ import userModel from "../models/userModel.js";
 import Stripe from "stripe";
 import axios from "axios";
 
-// Global variables
 const currency = "usd";
 const deliveryCharge = 10;
-const deliveryChargeUSD = 10;
 
-// Stripe initialization
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Place order using COD method
+// Cash on Delivery
 const placeOrder = async (req, res) => {
   try {
     const { userId, items, amount, address } = req.body;
 
     if (!items?.length || !userId || !amount || !address) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields (items, user, amount, address)",
+      });
     }
 
     const orderData = {
@@ -38,23 +36,23 @@ const placeOrder = async (req, res) => {
 
     await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
-    res.json({ success: true, message: "Order Placed" });
+    res.json({ success: true, message: "Order placed with Cash on Delivery" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Place order using Stripe
+// Stripe
 const placeOrderStripe = async (req, res) => {
   try {
     const { userId, items, amount, address } = req.body;
     const { origin } = req.headers;
 
     if (!items?.length || !userId || !amount || !address) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields (items, user, amount, address)",
+      });
     }
 
     const orderData = {
@@ -74,21 +72,16 @@ const placeOrderStripe = async (req, res) => {
     const line_items = items.map((item) => ({
       price_data: {
         currency,
-        product_data: {
-          name: item.name,
-        },
+        product_data: { name: item.name },
         unit_amount: item.price * 100,
       },
       quantity: item.quantity,
     }));
 
-    // Add delivery charge
     line_items.push({
       price_data: {
         currency,
-        product_data: {
-          name: "Delivery Charges",
-        },
+        product_data: { name: "Delivery Charges" },
         unit_amount: deliveryCharge * 100,
       },
       quantity: 1,
@@ -103,12 +96,11 @@ const placeOrderStripe = async (req, res) => {
 
     res.json({ success: true, session_url: session.url });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Verify Stripe payment
+// Stripe verification
 const verifyStripe = async (req, res) => {
   const { orderId, success, userId } = req.body;
 
@@ -119,41 +111,28 @@ const verifyStripe = async (req, res) => {
       res.json({ success: true });
     } else {
       await orderModel.findByIdAndDelete(orderId);
-      res.json({ success: false });
+      res.json({
+        success: false,
+        message: "Payment not successful, order cancelled.",
+      });
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Place order using Paystack
+// Paystack
 const placeOrderPaystack = async (req, res) => {
   try {
-    console.log("Welcome");
-    console.log("Incoming Paystack order:", req.body);
-
     const { reference, userId, items, amount, address } = req.body;
 
     if (!reference || !userId || !items?.length || !amount || !address) {
-      console.log("Validation Failed", {
-        reference,
-        userId,
-        items,
-        amount,
-        address,
-      });
-
       return res.status(400).json({
         success: false,
-        message: "Missing order details",
+        message: "Missing required Paystack order fields",
       });
     }
 
-    // ✅ No conversion needed here — already in NGN
-    const amountNGN = amount;
-
-    // Verify Paystack Payment
     const verificationResponse = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
       {
@@ -164,14 +143,13 @@ const placeOrderPaystack = async (req, res) => {
     );
 
     const paymentData = verificationResponse.data;
-    console.log("Paystack Verification Response:", paymentData);
 
     if (paymentData.status && paymentData.data.status === "success") {
       const orderData = {
         userId,
         items,
         address,
-        amount: amountNGN,
+        amount,
         PaymentMethod: "Paystack",
         payment: true,
         date: Date.now(),
@@ -185,61 +163,55 @@ const placeOrderPaystack = async (req, res) => {
 
       res.json({
         success: true,
-        message: "Order placed successfully",
+        message: "Order placed successfully via Paystack",
         orderId: newOrder._id,
       });
     } else {
-      console.log("Payment verification failed");
       res.status(400).json({
         success: false,
         message: "Payment verification failed",
       });
     }
   } catch (error) {
-    console.error(
-      "Paystack error:",
-      error.response?.data || error.message || error
-    );
+    const msg =
+      error.response?.data?.message ||
+      error.message ||
+      "Paystack error occurred";
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: msg,
     });
   }
 };
 
-
-
-// Get all orders (admin)
+// Admin: Get all orders
 const allOrders = async (req, res) => {
   try {
     const orders = await orderModel.find({});
     res.json({ success: true, orders });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Get user orders
+// User: Get their own orders
 const userOrders = async (req, res) => {
   try {
     const { userId } = req.body;
     const orders = await orderModel.find({ userId });
     res.json({ success: true, orders });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Update order status (admin)
+// Admin: Update order status
 const updateStatus = async (req, res) => {
   try {
     const { orderId, status } = req.body;
     await orderModel.findByIdAndUpdate(orderId, { status });
-    res.json({ success: true, message: "Status Updated" });
+    res.json({ success: true, message: "Order status updated" });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
